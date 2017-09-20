@@ -379,8 +379,6 @@ module powerbi.extensibility.visual {
         }
 
         public playAnimation() {
-            console.log("----Play interval started----");
-            console.log("Last selected: " + this.lastSelected)
             if (this.status == Status.Play) return;
 
             this.svg.selectAll("#play, #next, #previous").attr("opacity", "0.3");
@@ -390,9 +388,7 @@ module powerbi.extensibility.visual {
 
             //TODO: check for data out of bounds
             let startingIndex = this.status == Status.Stop ? 0 : this.lastSelected + this.stepSize;
-            console.log("Starting index: " + startingIndex);
             for (let i = startingIndex; i < this.viewModel.dataPoints.length; i += this.stepSize) {
-                console.log("Timeout: " + (i - this.lastSelected) * timeInterval / this.stepSize);
                 let timer = setTimeout(() => {
                     this.selectionManager.select(this.viewModel.dataPoints[i].selectionId);
                     this.lastSelected = i;
@@ -411,7 +407,6 @@ module powerbi.extensibility.visual {
                     this.stopAnimation();
                 }
             }, (this.viewModel.dataPoints.length - this.lastSelected) * timeInterval / this.stepSize);
-            console.log("Stop at: " + (this.viewModel.dataPoints.length - this.lastSelected) * timeInterval / this.stepSize);
             this.timers.push(stopAnimationTimer);
             this.status = Status.Play;
         }

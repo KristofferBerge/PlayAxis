@@ -1,8 +1,9 @@
 # PlayAxis
 
-Simple Power BI visual that works like a dynamic slicer, animating other visuals. It has controls like "play", "pause", "stop", "previous" and "next" allowing a report and its visuals to play with less user interaction. 
-This visual accepts any parameter to be played and has some settings like colours, font size and transitions options, to be customized by the user.
+Forked version of the [PlayAxis](https://github.com/mprozil/PlayAxis) custom visual. Adding buttons for selecting time-resolution enables the visual to skip values for stepping through the dataset faster. The resolution can be adjusted during playing.
 
-![](assets/Screenshot1.png)
+>This project is just used for a demo with a dataset that has a resolution of one value per second. The visual will not adjust itself to datasets with different resolution and will just jump 60 indexes instead of one when minute is selected.
 
-![](assets/Screenshot2.png)
+
+
+![](assets/screenshot.PNG)
