@@ -25,12 +25,12 @@
  */
 
 module powerbi.extensibility.visual {
-     /**
-     * Interface for viewmodel.
-     *
-     * @interface
-     * @property {CategoryDataPoint[]} dataPoints - Set of data points the visual will render.
-     */
+    /**
+    * Interface for viewmodel.
+    *
+    * @interface
+    * @property {CategoryDataPoint[]} dataPoints - Set of data points the visual will render.
+    */
     interface ViewModel {
         dataPoints: CategoryDataPoint[];
         settings: VisualSettings;
@@ -48,7 +48,7 @@ module powerbi.extensibility.visual {
         category: string;
         selectionId: ISelectionId;
     };
-    
+
     /**
      * Interface for VisualChart settings.
      *
@@ -67,7 +67,7 @@ module powerbi.extensibility.visual {
      * @property {{captionColor:Fill}} captionSettings - Object property that allows setting the caption buttons.
      * @property {{fontSize:number}} captionSettings - Object property that allows setting the caption font size.
      */
-    interface VisualSettings {        
+    interface VisualSettings {
         transitionSettings: {
             autoStart: boolean;
             loop: boolean;
@@ -129,7 +129,7 @@ module powerbi.extensibility.visual {
         let category = categorical.categories[0];
 
         let categoryDataPoints: CategoryDataPoint[] = [];
-        
+
         let colorPalette: IColorPalette = host.colorPalette;
         let objects = dataViews[0].metadata.objects;
 
@@ -164,7 +164,7 @@ module powerbi.extensibility.visual {
                     .createSelectionId()
             });
         }
-      
+
         return {
             dataPoints: categoryDataPoints,
             settings: visualSettings,
@@ -180,20 +180,19 @@ module powerbi.extensibility.visual {
      *                                        the visual had queried.
      */
     function isDataReady(options: VisualUpdateOptions) {
-        if(!options
-        || !options.dataViews
-        || !options.dataViews[0]
-        || !options.dataViews[0].categorical
-        || !options.dataViews[0].categorical.categories
-        || !options.dataViews[0].categorical.categories[0].source)
-        {
+        if (!options
+            || !options.dataViews
+            || !options.dataViews[0]
+            || !options.dataViews[0].categorical
+            || !options.dataViews[0].categorical.categories
+            || !options.dataViews[0].categorical.categories[0].source) {
             return false;
         }
 
-        return true;                         
-    }    
+        return true;
+    }
 
-    enum Status {Play, Pause, Stop}
+    enum Status { Play, Pause, Stop }
 
     export class Visual implements IVisual {
         private host: IVisualHost;
@@ -208,44 +207,61 @@ module powerbi.extensibility.visual {
         private viewModel: ViewModel;
         private fieldName: string;
         private timers: any;
+        private stepSize: number;
 
         constructor(options: VisualConstructorOptions) {
             this.host = options.host;
             this.selectionManager = options.host.createSelectionManager();
             this.status = Status.Stop;
             this.timers = [];
-            this.lastSelected = 0;            
-           
-            let buttonNames = ["play", "pause", "stop","previous","next"];
+            this.lastSelected = 0;
+
+            let buttonNames = ["play", "pause", "stop", "previous", "next"];
             let buttonPath = [
-                    "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-3 17v-10l9 5.146-9 4.854z", 
-                    "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-1 17h-3v-10h3v10zm5-10h-3v10h3v-10z", 
-                    "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-1 17h-3.5v-10h9v10z",
-                    "M22 12c0 5.514-4.486 10-10 10s-10-4.486-10-10 4.486-10 10-10 10 4.486 10 10zm-22 0c0 6.627 5.373 12 12 12s12-5.373 12-12-5.373-12-12-12-12 5.373-12 12zm13 0l5-4v8l-5-4zm-5 0l5-4v8l-5-4zm-2 4h2v-8h-2v8z",
-                    "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-6 16v-8l5 4-5 4zm5 0v-8l5 4-5 4zm7-8h-2v8h2v-8z"
-                   ];
+                "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-3 17v-10l9 5.146-9 4.854z",
+                "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-1 17h-3v-10h3v10zm5-10h-3v10h3v-10z",
+                "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-1 17h-3.5v-10h9v10z",
+                "M22 12c0 5.514-4.486 10-10 10s-10-4.486-10-10 4.486-10 10-10 10 4.486 10 10zm-22 0c0 6.627 5.373 12 12 12s12-5.373 12-12-5.373-12-12-12-12 5.373-12 12zm13 0l5-4v8l-5-4zm-5 0l5-4v8l-5-4zm-2 4h2v-8h-2v8z",
+                "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-6 16v-8l5 4-5 4zm5 0v-8l5 4-5 4zm7-8h-2v8h2v-8z"
+            ];
 
             this.svg = d3.select(options.element).append("svg")
-                 .attr("width","100%")
-                 .attr("height","100%");
+                .attr("width", "100%")
+                .attr("height", "100%");
 
             //Append caption text           
             this.captionSVG = this.svg.append('svg');
             let captionBox = this.captionSVG.append('g');
             captionBox.append('text')
-                .attr('dy','0.22em')
-                .attr('id','label');
+                .attr('dy', '0.22em')
+                .attr('id', 'label');
 
             this.controlsSVG = this.svg.append('svg');
             for (let i = 0; i < buttonNames.length; ++i) {
                 let container = this.controlsSVG.append('g')
-                 .attr('class', "controls")
-                 .attr('transform','translate(' + 30*i + ')')
-                 .attr('id', buttonNames[i]); 
+                    .attr('class', "controls")
+                    .attr('transform', 'translate(' + 30 * i + ')')
+                    .attr('id', buttonNames[i]);
                 container.append("path")
-                .attr("d", buttonPath[i]);
-             }
-            
+                    .attr("d", buttonPath[i]);
+            }
+
+            let stepGroup = this.svg.append('svg').append('g')
+                .attr('width', "100%")
+                .attr('font-size', "2em")
+            stepGroup.append("text")
+                .text('Second')
+                .attr('dy', '1em')
+                .attr('id', 'second')
+
+            stepGroup.append("text")
+                .text('Minute')
+                .attr('dy', '2em')
+                .attr('id', 'minute')
+
+            //Setting initial step size
+            this.setStepSize(1);
+
 
             //Events on click
             this.svg.select("#play").on("click", () => {
@@ -256,16 +272,40 @@ module powerbi.extensibility.visual {
             });
             this.svg.select("#pause").on("click", () => {
                 this.pauseAnimation();
-            });     
+            });
             this.svg.select("#previous").on("click", () => {
-                this.step(-1);
-            });     
+                this.step(-(this.stepSize));
+            });
             this.svg.select("#next").on("click", () => {
-                this.step(1);
-            });  
+                this.step(this.stepSize);
+            });
+            this.svg.select("#second").on("click", () => {
+                this.setStepSize(1);
+            });
+            this.svg.select("#minute").on("click", () => {
+                this.setStepSize(60);
+            });
 
-         }
-         
+        }
+
+        public setStepSize(units: number): void {
+            this.stepSize = units;
+            this.svg.selectAll("#minute, #second").attr("opacity", "0.3");
+            if (this.stepSize == 60)
+                this.svg.selectAll("#minute").attr("opacity", "1");
+            else if (this.stepSize == 1)
+                this.svg.selectAll("#second").attr("opacity", "1");
+
+            // State is playing. We need to recalculate timeouts in play stack
+            if(this.status == Status.Play){
+                //Trigger pause to clear stack and keep cursor
+                this.pauseAnimation();
+                //Trigger play to create new play stack
+                this.playAnimation();
+
+            }
+        }
+
         public update(options: VisualUpdateOptions) {
 
             if (isDataReady(options) == false) {
@@ -275,10 +315,10 @@ module powerbi.extensibility.visual {
             this.stopAnimation();
             let viewModel = this.viewModel = visualTransform(options, this.host);
             this.visualSettings = viewModel.settings;
-            this.visualDataPoints = viewModel.dataPoints;        
+            this.visualDataPoints = viewModel.dataPoints;
 
             //Start playing without click 
-            if (this.visualSettings.transitionSettings.autoStart) { 
+            if (this.visualSettings.transitionSettings.autoStart) {
                 this.playAnimation();
             }
 
@@ -298,7 +338,7 @@ module powerbi.extensibility.visual {
                 let pickedColor = viewModel.settings.colorSelector.pickedColor.solid.color;
                 this.svg.selectAll(".controls").attr("fill", viewModel.settings.colorSelector.pickedColor.solid.color);
             }
-            let captionColor = viewModel.settings.captionSettings.captionColor.solid.color;      
+            let captionColor = viewModel.settings.captionSettings.captionColor.solid.color;
             this.svg.select("#label").attr("fill", captionColor);
 
             //Change caption font size
@@ -308,71 +348,77 @@ module powerbi.extensibility.visual {
             this.fieldName = options.dataViews[0].categorical.categories[0].source.displayName;
 
             //Change title            
-            if (this.visualSettings.captionSettings.show) {   
-                this.updateCaption(this.fieldName);        
+            if (this.visualSettings.captionSettings.show) {
+                this.updateCaption(this.fieldName);
 
                 let node: any = <SVGElement>this.svg.select("#label").node();
                 let TextBBox = node.getBBox();
-            
+
                 let viewBoxWidth = 155 + TextBBox.width;
                 this.controlsSVG
-                .attr("viewBox","0 0 " + viewBoxWidth + " 24")
-                .attr('preserveAspectRatio','xMinYMid');
-          
+                    .attr("viewBox", "0 0 " + viewBoxWidth + " 24")
+                    .attr('preserveAspectRatio', 'xMinYMid');
+
                 if (this.visualSettings.captionSettings.align == "right") {
-                    this.captionSVG.select("text").attr('text-anchor', 'end').attr("x","100%");
-                    this.captionSVG.attr("viewBox","0 -14 " + viewBoxWidth + " 24").attr('preserveAspectRatio','xMaxYMid');
+                    this.captionSVG.select("text").attr('text-anchor', 'end').attr("x", "100%");
+                    this.captionSVG.attr("viewBox", "0 -14 " + viewBoxWidth + " 24").attr('preserveAspectRatio', 'xMaxYMid');
                 } else if (this.visualSettings.captionSettings.align == "center") {
-                    this.captionSVG.select("text").attr('text-anchor', 'middle').attr("x","50%");
-                    this.captionSVG.attr("viewBox","-75 -14 " + viewBoxWidth  + " 24").attr('preserveAspectRatio','xMidYMid');
+                    this.captionSVG.select("text").attr('text-anchor', 'middle').attr("x", "50%");
+                    this.captionSVG.attr("viewBox", "-75 -14 " + viewBoxWidth + " 24").attr('preserveAspectRatio', 'xMidYMid');
                 } else {
-                    this.captionSVG.select("text").attr('text-anchor', 'start').attr("x","0%");
-                    this.captionSVG.attr("viewBox","-150 -14 " + viewBoxWidth  + " 24").attr('preserveAspectRatio','xMinYMid');
+                    this.captionSVG.select("text").attr('text-anchor', 'start').attr("x", "0%");
+                    this.captionSVG.attr("viewBox", "-150 -14 " + viewBoxWidth + " 24").attr('preserveAspectRatio', 'xMinYMid');
                 }
-                
+
             } else {
                 this.svg.select("#label").text("");
                 this.controlsSVG
-                .attr("viewBox","0 0 145 24")
-                .attr('preserveAspectRatio','xMinYMid'); 
+                    .attr("viewBox", "0 0 145 24")
+                    .attr('preserveAspectRatio', 'xMinYMid');
             }
         }
 
-        public playAnimation() {              
+        public playAnimation() {
+            console.log("----Play interval started----");
+            console.log("Last selected: " + this.lastSelected)
             if (this.status == Status.Play) return;
-   
+
             this.svg.selectAll("#play, #next, #previous").attr("opacity", "0.3");
             this.svg.selectAll("#stop, #pause").attr("opacity", "1");
 
             let timeInterval = this.viewModel.settings.transitionSettings.timeInterval;
-            let startingIndex = this.status == Status.Stop ? 0 : this.lastSelected + 1;
-    
-            for (let i = startingIndex; i < this.viewModel.dataPoints.length; ++i) {                           
+
+            //TODO: check for data out of bounds
+            let startingIndex = this.status == Status.Stop ? 0 : this.lastSelected + this.stepSize;
+            console.log("Starting index: " + startingIndex);
+            for (let i = startingIndex; i < this.viewModel.dataPoints.length; i += this.stepSize) {
+                console.log("Timeout: " + (i - this.lastSelected) * timeInterval / this.stepSize);
                 let timer = setTimeout(() => {
                     this.selectionManager.select(this.viewModel.dataPoints[i].selectionId);
                     this.lastSelected = i;
-                    this.updateCaption(this.viewModel.dataPoints[i].category); 
-                }, (i - this.lastSelected) * timeInterval); 
+                    this.updateCaption(this.viewModel.dataPoints[i].category);
+                }, (i - this.lastSelected) * timeInterval / this.stepSize);
                 this.timers.push(timer);
             }
 
             //replay or stop after one cycle
             let stopAnimationTimer = setTimeout(() => {
-                if(this.visualSettings.transitionSettings.loop) {
+                if (this.visualSettings.transitionSettings.loop) {
                     this.status = Status.Stop;
                     this.lastSelected = 0;
                     this.playAnimation();
                 } else {
                     this.stopAnimation();
                 }
-            }, (this.viewModel.dataPoints.length - this.lastSelected) * timeInterval); 
+            }, (this.viewModel.dataPoints.length - this.lastSelected) * timeInterval / this.stepSize);
+            console.log("Stop at: " + (this.viewModel.dataPoints.length - this.lastSelected) * timeInterval / this.stepSize);
             this.timers.push(stopAnimationTimer);
             this.status = Status.Play;
-        }                
+        }
 
         public stopAnimation() {
-            if (this.status == Status.Stop) return; 
-            
+            if (this.status == Status.Stop) return;
+
             this.svg.selectAll("#pause, #stop, #next, #previous").attr("opacity", "0.3");
             this.svg.selectAll("#play").attr("opacity", "1");
             for (let i of this.timers) {
@@ -385,24 +431,24 @@ module powerbi.extensibility.visual {
         }
 
         public pauseAnimation() {
-            if (this.status == Status.Pause || this.status == Status.Stop) return;                                       
+            if (this.status == Status.Pause || this.status == Status.Stop) return;
 
             this.svg.selectAll("#pause").attr("opacity", "0.3");
-            this.svg.selectAll("#play, #stop, #next, #previous").attr("opacity", "1"); 
+            this.svg.selectAll("#play, #stop, #next, #previous").attr("opacity", "1");
             for (let i of this.timers) {
-                clearTimeout(i); 
-            } 
+                clearTimeout(i);
+            }
             this.status = Status.Pause;
         }
 
         public step(step: number) {
-            if (this.status == Status.Play || this.status == Status.Stop) return;                                       
+            if (this.status == Status.Play || this.status == Status.Stop) return;
 
             //Check if selection is within limits
-            if ((this.lastSelected + step) < 0 || (this.lastSelected + step) > (this.viewModel.dataPoints.length-1)) return;
+            if ((this.lastSelected + step) < 0 || (this.lastSelected + step) > (this.viewModel.dataPoints.length - 1)) return;
 
             let previousButtonOpacity = (this.lastSelected + step) == 0 ? 0.3 : 1;
-            let nextButtonOpacity = (this.lastSelected + step) == (this.viewModel.dataPoints.length-1) ? 0.3 : 1;
+            let nextButtonOpacity = (this.lastSelected + step) == (this.viewModel.dataPoints.length - 1) ? 0.3 : 1;
 
             this.svg.selectAll("#previous").attr("opacity", previousButtonOpacity);
             this.svg.selectAll("#next").attr("opacity", nextButtonOpacity);
@@ -428,8 +474,8 @@ module powerbi.extensibility.visual {
             let objectName = options.objectName;
             let objectEnumeration: VisualObjectInstance[] = [];
 
-            switch(objectName) {            
-                case 'transitionSettings': 
+            switch (objectName) {
+                case 'transitionSettings':
                     objectEnumeration.push({
                         objectName: objectName,
                         properties: {
@@ -447,12 +493,12 @@ module powerbi.extensibility.visual {
                         },
                         selector: null
                     });
-                break;
+                    break;
                 case 'colorSelector':
                     if (this.visualSettings.colorSelector.showAll) {
                         objectEnumeration.push({
                             objectName: objectName,
-                            properties: {                                
+                            properties: {
                                 showAll: this.visualSettings.colorSelector.showAll,
                                 playColor: {
                                     solid: {
@@ -460,31 +506,31 @@ module powerbi.extensibility.visual {
                                     }
                                 },
                                 pauseColor: {
-                                   solid: {
-                                       color: this.visualSettings.colorSelector.pauseColor.solid.color
-                                   }
+                                    solid: {
+                                        color: this.visualSettings.colorSelector.pauseColor.solid.color
+                                    }
                                 },
                                 stopColor: {
-                                   solid: {
-                                       color: this.visualSettings.colorSelector.stopColor.solid.color
-                                   }
+                                    solid: {
+                                        color: this.visualSettings.colorSelector.stopColor.solid.color
+                                    }
                                 },
                                 previousColor: {
-                                   solid: {
-                                       color: this.visualSettings.colorSelector.previousColor.solid.color
-                                   }
+                                    solid: {
+                                        color: this.visualSettings.colorSelector.previousColor.solid.color
+                                    }
                                 },
                                 nextColor: {
                                     solid: {
-                                       color: this.visualSettings.colorSelector.nextColor.solid.color
-                                   }
+                                        color: this.visualSettings.colorSelector.nextColor.solid.color
+                                    }
                                 }
                             },
                             selector: null
                         });
-                    }  else {
+                    } else {
                         objectEnumeration.push({
-                        objectName: objectName,
+                            objectName: objectName,
                             properties: {
                                 showAll: this.visualSettings.colorSelector.showAll,
                                 pickedColor: {
@@ -495,8 +541,8 @@ module powerbi.extensibility.visual {
                             },
                             selector: null
                         });
-                    }          
-                break;
+                    }
+                    break;
                 case 'captionSettings':
                     objectEnumeration.push({
                         objectName: objectName,
@@ -520,7 +566,7 @@ module powerbi.extensibility.visual {
                         },
                         selector: null
                     });
-                break;
+                    break;
             };
             return objectEnumeration;
         }
