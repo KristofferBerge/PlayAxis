@@ -7,3 +7,6 @@ Forked version of the [PlayAxis](https://github.com/mprozil/PlayAxis) custom vis
 
 
 ![](assets/screenshot.PNG)
+
+
+Download packaged visual: [playAxis.pbiviz](https://github.com/KristofferBerge/PlayAxis/raw/master/dist/playAxis.pbiviz)
