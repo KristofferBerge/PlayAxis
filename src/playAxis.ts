@@ -249,15 +249,21 @@ module powerbi.extensibility.visual {
             let stepGroup = this.svg.append('svg').append('g')
                 .attr('width', "100%")
                 .attr('font-size', "2em")
+
             stepGroup.append("text")
                 .text('Second')
-                .attr('dy', '1em')
+                .attr('dy', '0.8em')
                 .attr('id', 'second')
 
             stepGroup.append("text")
                 .text('Minute')
-                .attr('dy', '2em')
+                .attr('dy', '1.8em')
                 .attr('id', 'minute')
+
+            stepGroup.append("text")
+                .text('Hour')
+                .attr('dy', '2.8em')
+                .attr('id', 'hour')
 
             //Setting initial step size
             this.setStepSize(1);
@@ -279,25 +285,32 @@ module powerbi.extensibility.visual {
             this.svg.select("#next").on("click", () => {
                 this.step(this.stepSize);
             });
+
+            // Setting step size on button click
             this.svg.select("#second").on("click", () => {
                 this.setStepSize(1);
             });
             this.svg.select("#minute").on("click", () => {
                 this.setStepSize(60);
             });
+            this.svg.select("#hour").on("click", () => {
+                this.setStepSize(60 * 60);
+            });
 
         }
 
         public setStepSize(units: number): void {
             this.stepSize = units;
-            this.svg.selectAll("#minute, #second").attr("opacity", "0.3");
+            this.svg.selectAll("#minute, #second, #hour").attr("opacity", "0.3");
             if (this.stepSize == 60)
                 this.svg.selectAll("#minute").attr("opacity", "1");
+            else if (this.stepSize == (60 * 60))
+                this.svg.selectAll("#hour").attr("opacity", "1");
             else if (this.stepSize == 1)
                 this.svg.selectAll("#second").attr("opacity", "1");
 
             // State is playing. We need to recalculate timeouts in play stack
-            if(this.status == Status.Play){
+            if (this.status == Status.Play) {
                 //Trigger pause to clear stack and keep cursor
                 this.pauseAnimation();
                 //Trigger play to create new play stack
