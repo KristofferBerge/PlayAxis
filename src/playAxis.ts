@@ -200,6 +200,7 @@ module powerbi.extensibility.visual {
         private svg: d3.Selection<SVGElement>;
         private controlsSVG: d3.Selection<SVGElement>;
         private captionSVG: d3.Selection<SVGElement>;
+        private stepSVG: d3.Selection<SVGElement>;
         private visualDataPoints: CategoryDataPoint[];
         private visualSettings: VisualSettings;
         private status: Status;
@@ -229,41 +230,47 @@ module powerbi.extensibility.visual {
                 .attr("width", "100%")
                 .attr("height", "100%");
 
+            this.svg.append('g').append("text")
+                .text('Second')
+                .attr('font-size', '0.6em')
+                .attr('dy', '0.8em')
+                .attr('id', 'second')
+
+            this.svg.append('g').append("text")
+                .text('10 seconds')
+                .attr('font-size', '0.6em')
+                .attr('dy', '1.8em')
+                .attr('id', 'tenSeconds')
+
+            this.svg.append('g').append("text")
+                .text('Minute')
+                .attr('font-size', '0.6em')
+                .attr('dy', '2.8em')
+                .attr('id', 'minute')
+
+            this.svg.append('g').append("text")
+                .text('Hour')
+                .attr('font-size', '0.6em')
+                .attr('dy', '3.8em')
+                .attr('id', 'hour')
+
             //Append caption text           
-            this.captionSVG = this.svg.append('svg');
+            this.captionSVG = this.svg.append('svg').attr('y', "2.5em");
             let captionBox = this.captionSVG.append('g');
             captionBox.append('text')
                 .attr('dy', '0.22em')
                 .attr('id', 'label');
 
-            this.controlsSVG = this.svg.append('svg');
+            this.controlsSVG = this.svg.append('svg').attr('y', "2.5em");
             for (let i = 0; i < buttonNames.length; ++i) {
                 let container = this.controlsSVG.append('g')
+
                     .attr('class', "controls")
                     .attr('transform', 'translate(' + 30 * i + ')')
                     .attr('id', buttonNames[i]);
                 container.append("path")
                     .attr("d", buttonPath[i]);
             }
-
-            let stepGroup = this.svg.append('svg').append('g')
-                .attr('width', "100%")
-                .attr('font-size', "2em")
-
-            stepGroup.append("text")
-                .text('Second')
-                .attr('dy', '0.8em')
-                .attr('id', 'second')
-
-            stepGroup.append("text")
-                .text('Minute')
-                .attr('dy', '1.8em')
-                .attr('id', 'minute')
-
-            stepGroup.append("text")
-                .text('Hour')
-                .attr('dy', '2.8em')
-                .attr('id', 'hour')
 
             //Setting initial step size
             this.setStepSize(1);
@@ -290,6 +297,9 @@ module powerbi.extensibility.visual {
             this.svg.select("#second").on("click", () => {
                 this.setStepSize(1);
             });
+            this.svg.select("#tenSeconds").on("click", () => {
+                this.setStepSize(10);
+            });
             this.svg.select("#minute").on("click", () => {
                 this.setStepSize(60);
             });
@@ -301,8 +311,10 @@ module powerbi.extensibility.visual {
 
         public setStepSize(units: number): void {
             this.stepSize = units;
-            this.svg.selectAll("#minute, #second, #hour").attr("opacity", "0.3");
-            if (this.stepSize == 60)
+            this.svg.selectAll("#minute, #second, #tenSeconds, #hour").attr("opacity", "0.3");
+            if (this.stepSize == 10)
+                this.svg.selectAll("#tenSeconds").attr("opacity", "1");
+            else if (this.stepSize == 60)
                 this.svg.selectAll("#minute").attr("opacity", "1");
             else if (this.stepSize == (60 * 60))
                 this.svg.selectAll("#hour").attr("opacity", "1");
@@ -368,13 +380,14 @@ module powerbi.extensibility.visual {
                 let TextBBox = node.getBBox();
 
                 let viewBoxWidth = 155 + TextBBox.width;
-                this.controlsSVG
+                this.svg
                     .attr("viewBox", "0 0 " + viewBoxWidth + " 24")
-                    .attr('preserveAspectRatio', 'xMinYMid');
+                    .attr('preserveAspectRatio', 'xMinYMin');
 
                 if (this.visualSettings.captionSettings.align == "right") {
                     this.captionSVG.select("text").attr('text-anchor', 'end').attr("x", "100%");
                     this.captionSVG.attr("viewBox", "0 -14 " + viewBoxWidth + " 24").attr('preserveAspectRatio', 'xMaxYMid');
+
                 } else if (this.visualSettings.captionSettings.align == "center") {
                     this.captionSVG.select("text").attr('text-anchor', 'middle').attr("x", "50%");
                     this.captionSVG.attr("viewBox", "-75 -14 " + viewBoxWidth + " 24").attr('preserveAspectRatio', 'xMidYMid');
@@ -385,9 +398,9 @@ module powerbi.extensibility.visual {
 
             } else {
                 this.svg.select("#label").text("");
-                this.controlsSVG
+                this.svg
                     .attr("viewBox", "0 0 145 24")
-                    .attr('preserveAspectRatio', 'xMinYMid');
+                    .attr('preserveAspectRatio', 'xMinYMin');
             }
         }
 
